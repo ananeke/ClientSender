@@ -22,28 +22,60 @@ namespace ClientSender
     /// </summary>
     public partial class MainWindow : Window
     {
+        NetworkStream netStream;
+        TcpClient clients;
+        string address;
+        int usedPort;
         public MainWindow()
         {
             InitializeComponent();
+
+            adrress.Text = IPAddress.Loopback.ToString();
+            usedPort = 22;
+            port.Text = usedPort.ToString();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void Button_Connect(object sender, RoutedEventArgs e)
         {
-            adrress.Text = IPAddress.Loopback.ToString();
-            int ports = System.Convert.ToInt16(port.Text);
-            ;
-
+            address = adrress.Text;
+            usedPort = int.Parse(port.Text);
             try
             {
-                TcpClient clients = new TcpClient(adrress.Text, ports);
+                clients = new TcpClient(address, usedPort);
                 info.Items.Add("Wysyłam zapytanie...");
             }
-
             catch (Exception ex)
             {
                 info.Items.Add("Błąd: Nie udało się nawiązać połączenia!");
                 MessageBox.Show(ex.ToString());
             }
+        }
+
+
+        private void Button_Send(object sender, RoutedEventArgs e)
+        {
+            netStream = clients.GetStream();
+
+            if (netStream.CanWrite)
+            {
+                Byte[] sendBytes = Encoding.UTF8.GetBytes(message.Text);
+                netStream.Write(sendBytes, 0, sendBytes.Length);
+                
+            }
+            else
+            {
+                info.Items.Add("Nie możesz wysłać wiadomości!");
+                clients.Close();
+                netStream.Close();
+                return;
+            }
+        }
+
+        private void Button_Disconnect(object sender, RoutedEventArgs e)
+        {
+            netStream.Close();
+            clients.Close();
+            info.Items.Add("Nastąpiło rozłączenie... ");
         }
     }
 }
